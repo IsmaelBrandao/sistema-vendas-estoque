@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Arquivos temporários
+*.log
+*.tmp
+~$*.xlsx
+
+# Relatórios gerados (são criados dinamicamente)
+reports/*.xlsx
+
+# Dataset processado (é gerado pelo script)
+data/dataset_processado.xlsx
+
+# Não versionar o script de setup (apenas uma vez)
+setup/setup_planilhas.py
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

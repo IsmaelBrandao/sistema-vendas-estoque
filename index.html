@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Análise de Vendas e Estoque</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .filters {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .filters label {
+            font-weight: 600;
+            color: #2d3748;
+            margin-right: 10px;
+        }
+
+        .filters select {
+            padding: 10px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-right: 15px;
+            transition: all 0.3s;
+        }
+
+        .filters select:hover {
+            border-color: #667eea;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left: 4px solid;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+        }
+
+        .metric-card.green { border-left-color: #10b981; }
+        .metric-card.blue { border-left-color: #3b82f6; }
+        .metric-card.purple { border-left-color: #8b5cf6; }
+        .metric-card.pink { border-left-color: #ec4899; }
+
+        .metric-label {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            color: #2d3748;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .metric-change {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .metric-change.positive { color: #10b981; }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .chart-card h3 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .table-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .table-card h3 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f7fafc;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 12px;
+            color: #4a5568;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tbody tr:hover {
+            background: #f7fafc;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge.critical { background: #fee2e2; color: #dc2626; }
+        .badge.low { background: #fef3c7; color: #d97706; }
+
+        .footer {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            color: #718096;
+            font-size: 13px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">Carregando dados...</div>
+    
+    <div class="container" id="dashboard" style="display: none;">
+        <div class="header">
+            <h1>Dashboard - Sistema de Vendas e Estoque</h1>
+            <p>Análise de Performance | Período: Janeiro a Junho 2024</p>
+        </div>
+
+        <div class="filters">
+            <label>Filial:</label>
+            <select id="filialSelect" onchange="atualizarMetricas()">
+                <option value="todas">Todas as Filiais</option>
+                <option value="centro">Centro - SP</option>
+                <option value="norte">Norte - Manaus</option>
+                <option value="sul">Sul - Porto Alegre</option>
+                <option value="leste">Leste - Rio de Janeiro</option>
+            </select>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card green">
+                <div class="metric-label">Faturamento Total</div>
+                <div class="metric-value" id="faturamento">-</div>
+                <div class="metric-change positive">↑ 12.5% vs período anterior</div>
+            </div>
+
+            <div class="metric-card blue">
+                <div class="metric-label">Total de Vendas</div>
+                <div class="metric-value" id="vendas">-</div>
+                <div class="metric-change positive">↑ 8.3% vs período anterior</div>
+            </div>
+
+            <div class="metric-card purple">
+                <div class="metric-label">Ticket Médio</div>
+                <div class="metric-value" id="ticket">-</div>
+                <div class="metric-change positive">↑ 5.7% vs período anterior</div>
+            </div>
+
+            <div class="metric-card pink">
+                <div class="metric-label">Taxa de Conversão</div>
+                <div class="metric-value" id="conversao">-</div>
+                <div class="metric-change positive">↑ 3.2% vs período anterior</div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Evolução de Vendas Mensal</h3>
+                <canvas id="chartVendasMensal"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <h3>Faturamento por Filial</h3>
+                <canvas id="chartFiliais"></canvas>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Vendas por Categoria</h3>
+                <canvas id="chartCategorias"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <h3>Top 5 Produtos Mais Vendidos</h3>
+                <canvas id="chartTopProdutos"></canvas>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <h3>⚠️ Alertas de Estoque Crítico</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Filial</th>
+                        <th>Estoque Atual</th>
+                        <th>Estoque Mínimo</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaEstoque"></tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            <p>Sistema de Análise de Vendas e Estoque | Desenvolvido para gestão empresarial</p>
+            <p>Última atualização: <span id="dataAtualizacao">-</span></p>
+        </div>
+    </div>
+
+    <script>
+        let dadosGlobais = {
+            kpisGerais: null,
+            kpisFilial: null,
+            vendasMensais: null,
+            vendasFilial: null,
+            vendasCategoria: null,
+            topProdutos: null,
+            alertasEstoque: null
+        };
+
+        let charts = {
+            mensal: null,
+            filiais: null,
+            categorias: null,
+            produtos: null
+        };
+
+        function formatarMoeda(valor) {
+            if (valor >= 1000000) {
+                return 'R$ ' + (valor / 1000000).toFixed(2) + 'M';
+            } else if (valor >= 1000) {
+                return 'R$ ' + (valor / 1000).toFixed(0) + 'k';
+            }
+            return 'R$ ' + valor.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+        }
+
+        async function carregarJSON(url) {
+            const response = await fetch(url);
+            return await response.json();
+        }
+
+        async function carregarCSV(url) {
+            return new Promise((resolve, reject) => {
+                Papa.parse(url, {
+                    download: true,
+                    header: true,
+                    complete: (results) => resolve(results.data),
+                    error: (error) => reject(error)
+                });
+            });
+        }
+
+        async function carregarTodosDados() {
+            try {
+                dadosGlobais.kpisGerais = await carregarJSON('data/dashboard/kpis_gerais.json');
+                dadosGlobais.kpisFilial = await carregarJSON('data/dashboard/kpis_por_filial.json');
+                dadosGlobais.vendasMensais = await carregarCSV('data/dashboard/vendas_mensais.csv');
+                dadosGlobais.vendasFilial = await carregarCSV('data/dashboard/vendas_por_filial.csv');
+                dadosGlobais.vendasCategoria = await carregarCSV('data/dashboard/vendas_por_categoria.csv');
+                dadosGlobais.topProdutos = await carregarCSV('data/dashboard/top_produtos.csv');
+                dadosGlobais.alertasEstoque = await carregarCSV('data/dashboard/alertas_estoque.csv');
+                
+                return true;
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                alert('Erro ao carregar dados. Execute: python src/exportar_dashboard_data.py');
+                return false;
+            }
+        }
+
+        function atualizarMetricas() {
+            const filial = document.getElementById('filialSelect').value;
+            
+            if (filial === 'todas') {
+                document.getElementById('faturamento').textContent = formatarMoeda(dadosGlobais.kpisGerais.faturamento_total);
+                document.getElementById('vendas').textContent = dadosGlobais.kpisGerais.total_vendas.toLocaleString('pt-BR');
+                document.getElementById('ticket').textContent = formatarMoeda(dadosGlobais.kpisGerais.ticket_medio);
+                document.getElementById('conversao').textContent = dadosGlobais.kpisGerais.taxa_conversao + '%';
+            } else {
+                const dados = dadosGlobais.kpisFilial[filial];
+                document.getElementById('faturamento').textContent = formatarMoeda(dados.faturamento);
+                document.getElementById('vendas').textContent = dados.vendas.toLocaleString('pt-BR');
+                document.getElementById('ticket').textContent = formatarMoeda(dados.ticket);
+                document.getElementById('conversao').textContent = dados.conversao + '%';
+            }
+        }
+
+        function criarGraficos() {
+            const meses = dadosGlobais.vendasMensais.map(d => d.mes_nome);
+            const faturamentos = dadosGlobais.vendasMensais.map(d => parseFloat(d.faturamento));
+
+            charts.mensal = new Chart(document.getElementById('chartVendasMensal'), {
+                type: 'line',
+                data: {
+                    labels: meses,
+                    datasets: [{
+                        label: 'Faturamento (R$)',
+                        data: faturamentos,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R$ ' + (value / 1000) + 'k';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const filiais = dadosGlobais.vendasFilial.map(d => d.filial);
+            const faturamentoFilial = dadosGlobais.vendasFilial.map(d => parseFloat(d.faturamento));
+
+            charts.filiais = new Chart(document.getElementById('chartFiliais'), {
+                type: 'bar',
+                data: {
+                    labels: filiais,
+                    datasets: [{
+                        label: 'Faturamento (R$)',
+                        data: faturamentoFilial,
+                        backgroundColor: ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R$ ' + (value / 1000) + 'k';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const categorias = dadosGlobais.vendasCategoria.map(d => d.categoria);
+            const percentuais = dadosGlobais.vendasCategoria.map(d => parseFloat(d.percentual));
+
+            charts.categorias = new Chart(document.getElementById('chartCategorias'), {
+                type: 'doughnut',
+                data: {
+                    labels: categorias,
+                    datasets: [{
+                        data: percentuais,
+                        backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+            const produtos = dadosGlobais.topProdutos.slice(0, 5).map(d => d.produto);
+            const receitas = dadosGlobais.topProdutos.slice(0, 5).map(d => parseFloat(d.receita));
+
+            charts.produtos = new Chart(document.getElementById('chartTopProdutos'), {
+                type: 'bar',
+                data: {
+                    labels: produtos,
+                    datasets: [{
+                        label: 'Receita (R$)',
+                        data: receitas,
+                        backgroundColor: '#8b5cf6'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R$ ' + (value / 1000) + 'k';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function preencherTabelaEstoque() {
+            const tbody = document.getElementById('tabelaEstoque');
+            tbody.innerHTML = '';
+
+            dadosGlobais.alertasEstoque.forEach(alerta => {
+                const badgeClass = alerta.status === 'Crítico' ? 'critical' : 'low';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${alerta.produto}</td>
+                    <td>${alerta.filial}</td>
+                    <td>${alerta.estoque_atual}</td>
+                    <td>${alerta.estoque_minimo}</td>
+                    <td><span class="badge ${badgeClass}">${alerta.status}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function inicializarDashboard() {
+            const sucesso = await carregarTodosDados();
+            
+            if (sucesso) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                
+                atualizarMetricas();
+                criarGraficos();
+                preencherTabelaEstoque();
+                document.getElementById('dataAtualizacao').textContent = dadosGlobais.kpisGerais.ultima_atualizacao;
+            }
+        }
+
+        inicializarDashboard();
+    </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+produto,filial,estoque_atual,estoque_minimo,status
+Notebook Lenovo ThinkPad E14 i7 16GB,Centro - SP,5,20,Crítico
+Monitor LG 27 Full HD IPS 75Hz,Centro - SP,6,20,Crítico
+Headset Gamer HyperX Cloud II,Sul - Porto Alegre,7,35,Crítico
+Headset Gamer HyperX Cloud II,Leste - Rio de Janeiro,8,35,Crítico
+Monitor Samsung 24 Curvo Gaming 144Hz,Centro - SP,8,18,Crítico
+Cadeira Gamer DT3 Sports Elite,Sul - Porto Alegre,9,15,Baixo
+Monitor LG 27 Full HD IPS 75Hz,Norte - Manaus,14,20,Baixo
+Teclado Logitech K380 Bluetooth,Centro - SP,15,45,Crítico
+Mouse Logitech MX Master 3,Centro - SP,16,50,Crítico
+Webcam Logitech C920 Full HD,Sul - Porto Alegre,17,30,Baixo

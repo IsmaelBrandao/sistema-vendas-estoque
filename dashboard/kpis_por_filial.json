@@ -1,0 +1,26 @@
+{
+  "centro": {
+    "faturamento": 1306473.47,
+    "vendas": 602,
+    "ticket": 2170.2217109634553,
+    "conversao": 68.1
+  },
+  "norte": {
+    "faturamento": 1154799.46,
+    "vendas": 461,
+    "ticket": 2504.9879826464207,
+    "conversao": 67.8
+  },
+  "sul": {
+    "faturamento": 1107084.89,
+    "vendas": 466,
+    "ticket": 2375.718648068669,
+    "conversao": 67.6
+  },
+  "leste": {
+    "faturamento": 625564.47,
+    "vendas": 271,
+    "ticket": 2308.3559778597787,
+    "conversao": 66.5
+  }
+}
