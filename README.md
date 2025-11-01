@@ -6,7 +6,7 @@
 [![Pandas](https://img.shields.io/badge/Pandas-2.1.0-green.svg)](https://pandas.pydata.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[🚀 Ver Dashboard Online](https://IsmaelBrandao.io/sistema-vendas-estoque)
+[🚀 Ver Dashboard Online](https://ismaelbrandao.github.io/sistema-vendas-estoque)
 
 ---
 
@@ -88,7 +88,7 @@ start dashboard.html # Windows
 xdg-open dashboard.html # Linux
 ```
 
-Ou acesse online: [Dashboard](https://IsmaelBrandao.github.io/sistema-vendas-estoque)
+Ou acesse online: [Dashboard](https://ismaelbrandao.github.io/sistema-vendas-estoque)
 
 ---
 
